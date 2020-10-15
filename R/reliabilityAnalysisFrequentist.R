@@ -166,6 +166,8 @@ reliabilityFrequentist <- function(jaspResults, dataset, options) {
 
         }
 
+        relyFit[["data"]] <- NULL
+
         # first the scale statistics
         cordat <- cor(dataset, use = use.cases)
         relyFit[["freq"]][["est"]][["avg_cor"]] <- mean(cordat[lower.tri(cordat)])
