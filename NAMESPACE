@@ -1,4 +1,7 @@
 export(reliabilityUniDimFrequentist)
+export(reliabilityMultiDimFrequentist)
+export(cohensFleissKappa)
 export(intraclassCorrelation)
 export(reliabilityUniDimBayesian)
-export(cohensFleissKappa)
+export(reliabilityMultiDimBayesian)
+

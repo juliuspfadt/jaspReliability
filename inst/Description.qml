@@ -29,12 +29,19 @@ Description
 
 	Analysis
 	{
+		title:	qsTr("Multidimensional Reliability")
+		qml: 	"multiDimFrequentist.qml"
+		func: 	"reliabilityMultiDimFrequentist"
+	}
+
+	Analysis
+	{
 		title:	qsTr("Intraclass Correlation")
 		qml: 	"intraclassCorrelation.qml"
 		func: 	"intraclassCorrelation"
 	}
 	
-		Analysis
+	Analysis
 	{
 		title:	qsTr("Cohen's & Fleiss' kappa")
 		qml: 	"cohensFleissKappa.qml"
@@ -50,10 +57,15 @@ Description
 	}
 	Analysis
 	{
-		menu: 	qsTr("Unidimensional Reliability")
 		title: 	qsTr("Bayesian Unidimensional Reliability")
 		qml: 	"uniDimBayesian.qml"
 		func: 	"reliabilityUniDimBayesian"
+	}
+	Analysis
+	{
+		title: 	qsTr("Bayesian Multidimensional Reliability")
+		qml: 	"multiDimBayesian.qml"
+		func: 	"reliabilityMultiDimBayesian"
 	}
 
 }
