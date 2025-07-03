@@ -365,11 +365,11 @@
     },
     "RcppArmadillo": {
       "Package": "RcppArmadillo",
-      "Version": "14.4.3-1",
+      "Version": "14.6.0-1",
       "Source": "Repository",
       "Type": "Package",
       "Title": "'Rcpp' Integration for the 'Armadillo' Templated Linear Algebra Library",
-      "Date": "2025-05-21",
+      "Date": "2025-07-02",
       "Authors@R": "c(person(\"Dirk\", \"Eddelbuettel\", role = c(\"aut\", \"cre\"), email = \"edd@debian.org\", comment = c(ORCID = \"0000-0001-6419-907X\")), person(\"Romain\", \"Francois\", role = \"aut\", comment = c(ORCID = \"0000-0002-2444-4226\")), person(\"Doug\", \"Bates\", role = \"aut\", comment = c(ORCID = \"0000-0001-8316-9503\")), person(\"Binxiang\", \"Ni\", role = \"aut\"), person(\"Conrad\", \"Sanderson\", role = \"aut\", comment = c(ORCID = \"0000-0002-0049-4501\")))",
       "Description": "'Armadillo' is a templated C++ linear algebra library (by Conrad Sanderson) that aims towards a good balance between speed and ease of use. Integer, floating point and complex numbers are supported, as well as a subset of trigonometric and statistics functions. Various matrix decompositions are provided through optional integration with LAPACK and ATLAS libraries.  The 'RcppArmadillo' package includes the header files from the templated 'Armadillo' library. Thus users do not need to install 'Armadillo' itself in order to use 'RcppArmadillo'. From release 7.800.0 on, 'Armadillo' is licensed under Apache License 2; previous releases were under licensed as MPL 2.0 from version 3.800.0 onwards and LGPL-3 prior to that; 'RcppArmadillo' (the 'Rcpp' bindings/bridge to Armadillo) is licensed under the GNU GPL version 2 or later, as is the rest of 'Rcpp'.",
       "License": "GPL (>= 2)",
@@ -399,8 +399,7 @@
       "NeedsCompilation": "yes",
       "Author": "Dirk Eddelbuettel [aut, cre] (ORCID: <https://orcid.org/0000-0001-6419-907X>), Romain Francois [aut] (ORCID: <https://orcid.org/0000-0002-2444-4226>), Doug Bates [aut] (ORCID: <https://orcid.org/0000-0001-8316-9503>), Binxiang Ni [aut], Conrad Sanderson [aut] (ORCID: <https://orcid.org/0000-0002-0049-4501>)",
       "Maintainer": "Dirk Eddelbuettel <edd@debian.org>",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "Encoding": "UTF-8"
+      "Repository": "CRAN"
     },
     "RcppEigen": {
       "Package": "RcppEigen",
@@ -2681,13 +2680,13 @@
     },
     "permute": {
       "Package": "permute",
-      "Version": "0.9-7",
+      "Version": "0.9-8",
       "Source": "Repository",
       "Title": "Functions for Generating Restricted Permutations of Data",
-      "Date": "2022-01-27",
+      "Date": "2025-06-25",
       "Authors@R": "c(person(given = \"Gavin L.\", family = \"Simpson\", email = \"ucfagls@gmail.com\", role = c(\"aut\", \"cph\", \"cre\"), comment = c(ORCID = \"0000-0002-9084-8413\")), person(given = \"R Core Team\", role = \"cph\"), person(given = \"Douglas M.\", family = \"Bates\", role = \"ctb\"), person(given = \"Jari\", family = \"Oksanen\", role = \"ctb\"))",
       "Depends": [
-        "R (>= 2.14.0)"
+        "R (>= 3.6.0)"
       ],
       "Imports": [
         "stats"
@@ -2709,7 +2708,7 @@
       "Copyright": "see file COPYRIGHTS",
       "VignetteBuilder": "knitr",
       "NeedsCompilation": "no",
-      "Author": "Gavin L. Simpson [aut, cph, cre] (<https://orcid.org/0000-0002-9084-8413>), R Core Team [cph], Douglas M. Bates [ctb], Jari Oksanen [ctb]",
+      "Author": "Gavin L. Simpson [aut, cph, cre] (ORCID: <https://orcid.org/0000-0002-9084-8413>), R Core Team [cph], Douglas M. Bates [ctb], Jari Oksanen [ctb]",
       "Maintainer": "Gavin L. Simpson <ucfagls@gmail.com>",
       "Repository": "CRAN"
     },
@@ -3066,9 +3065,9 @@
     },
     "psych": {
       "Package": "psych",
-      "Version": "2.5.3",
+      "Version": "2.5.6",
       "Source": "Repository",
-      "Date": "2025-03-18",
+      "Date": "2025-06-20",
       "Title": "Procedures for Psychological, Psychometric, and Personality Research",
       "Authors@R": "person(\"William\", \"Revelle\", role =c(\"aut\",\"cre\"), email=\"revelle@northwestern.edu\", comment=c(ORCID  = \"0000-0003-4880-9610\") )",
       "Description": "A general purpose toolbox developed originally for personality, psychometric theory and experimental psychology.  Functions are primarily for multivariate analysis and scale construction using factor analysis, principal component analysis, cluster analysis and reliability analysis, although others provide basic descriptive statistics. Item Response Theory is done using  factor analysis of tetrachoric and polychoric correlations. Functions for analyzing data at multiple levels include within and between group statistics, including correlations and factor analysis.  Validation and cross validation of scales developed using basic machine learning algorithms are provided, as are functions for simulating and testing particular item and test structures. Several functions  serve as a useful front end for structural equation modeling.  Graphical displays of path diagrams, including mediation models, factor analysis and structural equation models are created using basic graphics. Some of the functions are written to support a book on psychometric theory as well as publications in personality research. For more information, see the <https://personality-project.org/r/> web page.",
@@ -3098,7 +3097,7 @@
       "VignetteBuilder": "knitr",
       "URL": "https://personality-project.org/r/psych/ https://personality-project.org/r/psych-manual.pdf",
       "NeedsCompilation": "no",
-      "Author": "William Revelle [aut, cre] (<https://orcid.org/0000-0003-4880-9610>)",
+      "Author": "William Revelle [aut, cre] (ORCID: <https://orcid.org/0000-0003-4880-9610>)",
       "Maintainer": "William Revelle <revelle@northwestern.edu>",
       "Repository": "CRAN"
     },
