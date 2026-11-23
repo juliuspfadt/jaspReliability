@@ -350,10 +350,10 @@ reliabilityMultidimensionalFrequentistInternal <- function(jaspResults, dataset,
   cc <- cor(dataset, use = if (pairwise) "pairwise.complete.obs" else "complete.obs")
   rows[[length(rows) + 1L]] <- addStatRow(gettext("Average interitem correlation"), mean(cc[lower.tri(cc)]))
 
-  scores <- if (options[["meanSdScoresMethod"]] == "sumScores")
-    rowSums(scoreData, na.rm = TRUE) else rowMeans(scoreData, na.rm = TRUE)
+  scores <- .scaleScores(scoreData, options[["meanSdScoresMethod"]])
   rows[[length(rows) + 1L]] <- addStatRow(gettext("Mean"), mean(scores))
   rows[[length(rows) + 1L]] <- addStatRow(gettext("SD"), sd(scores))
+  footnotes <- c(footnotes, .incompleteScoresFootnote(scoreData))
 
   scaleTable$setData(do.call(rbind.data.frame, c(rows, stringsAsFactors = FALSE)))
 
@@ -363,7 +363,7 @@ reliabilityMultidimensionalFrequentistInternal <- function(jaspResults, dataset,
       footnotes <- c(footnotes, gettextf("%1$i of %2$i bootstrap samples did not converge and were excluded from the interval.",
                                          failed, nrow(bootSamples)))
   }
-  for (note in footnotes)
+  for (note in footnotes[footnotes != ""])
     scaleTable$addFootnote(note)
 
   return()
@@ -419,17 +419,14 @@ reliabilityMultidimensionalFrequentistInternal <- function(jaspResults, dataset,
   if (showRest) {
     restData <- .multiDimFreqAnalysisData(dataset, options)
     df[["itemRestCorrelation"]] <- vapply(seq_along(allItems), function(i) {
-      restItems <- restData[, -i, drop = FALSE]
-      rest <- rowSums(restItems, na.rm = TRUE)
-      # a respondent without any other observed item has no rest score; rowSums would make it 0
-      rest[rowSums(!is.na(restItems)) == 0L] <- NA_real_
-      cor(restData[, i], rest, use = "pairwise.complete.obs")
+      cor(restData[, i], .restScores(restData, i), use = "pairwise.complete.obs")
     }, numeric(1))
+    footnotes <- c(footnotes, .incompleteScoresFootnote(restData))
   }
 
   itemTable$setData(df)
 
-  for (note in footnotes)
+  for (note in footnotes[footnotes != ""])
     itemTable$addFootnote(note)
   if (length(options[["reverseScaledItems"]]) > 0L)
     itemTable$addFootnote(.addFootnoteReverseScaledItems(options))

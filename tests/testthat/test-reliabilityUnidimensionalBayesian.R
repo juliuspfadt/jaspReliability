@@ -46,31 +46,31 @@ test_that("Bayesian Individual Item Reliability Statistics table results match",
   table <- results[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
   jaspTools::expect_equal_tables(table,
                                  list(4.92627402588481e-06, -0.0302604620110933, -0.00730189174965356,
-                                      -0.0263966643902482, 0.0494291189911074, 0.0322661722934691,
+                                      -0.0263966643902482, -0.00561248858154102, 0.0322661722934691,
                                       0.0212125066975763, 0.0325973854277802, 0.0331731363820002,
-                                      0.201506484849513, -0.18874858754, 1.1202393681253, 1.05841360919316,
+                                      0.181901723787286, -0.18874858754, 1.1202393681253, 1.05841360919316,
                                       0.0908764111289073, 0.0716108498281969, 0.0783885886016254,
-                                      0.088076771786422, 0.347636993674243, "contNormal", 9.40024640625682e-07,
+                                      0.088076771786422, 0.351495238530435, "contNormal", 9.40024640625682e-07,
                                       -0.0157617947104415, -0.00111243856322425, -0.0190459449106589,
-                                      0.0250257087054519, 0.0372377719573927, 0.0263018982813707,
-                                      0.0385176798582973, 0.0408577717365564, 0.18043738105305, 0.05254867287,
+                                      -0.0588152137506364, 0.0372377719573927, 0.0263018982813707,
+                                      0.0385176798582973, 0.0408577717365564, 0.133022501175036, 0.05254867287,
                                       1.02381744124251, 1.01183864387684, 0.101904192043362, 0.0684025775131465,
-                                      0.0730991379330716, 0.0888028726342832, 0.311403152449827, "contcor1",
+                                      0.0730991379330716, 0.0888028726342832, 0.293303312261887, "contcor1",
                                       3.87289002980574e-08, -0.00463647527725275, 0.00875019171674771,
-                                      -0.0134320095053386, -0.0805010870340148, 0.0472986075910507,
-                                      0.038667431651618, 0.0486615947429129, 0.0418361194803253, 0.0552126591050449,
+                                      -0.0134320095053386, -0.132318340124072, 0.0472986075910507,
+                                      0.038667431651618, 0.0486615947429129, 0.0418361194803253, 0.0328630334716597,
                                       0.06968807084, 1.00831589303215, 1.0041493380131, 0.109551905583045,
                                       0.0807291934771201, 0.0876232547094318, 0.0931732454320311,
-                                      0.228317875033916, "contcor2", 3.06076329377891e-08, -0.0148054356280015,
-                                      0.00210662418230392, -0.00568443009796629, -0.0786484764858476,
+                                      0.241063229801718, "contcor2", 3.06076329377891e-08, -0.0148054356280015,
+                                      0.00210662418230392, -0.00568443009796629, -0.0706014903797686,
                                       0.0315765590294506, 0.0308430722235896, 0.040822809190591, 0.0308787015955584,
-                                      0.0698072970377176, 3, 2.02020202020202, 1.4213381090374, 0.0878435386563503,
+                                      0.0701262946964365, 3, 2.02020202020202, 1.4213381090374, 0.0878435386563503,
                                       0.0718948260426243, 0.0786323358702756, 0.0729431637220809,
-                                      0.204256118691893, "facFive", 0.358369568041053, 0.285237073953381,
-                                      0.380102391628541, 0.435190812054853, 0.0164539097397541, 0.479869257412775,
-                                      0.434004318276763, 0.491435548543508, 0.557034393508082, 0.184196159162177,
+                                      0.264133224322801, "facFive", 0.358369568041053, 0.285237073953381,
+                                      0.380102391628541, 0.435190812054853, -0.0569056850018626, 0.479869257412775,
+                                      0.434004318276763, 0.491435548543508, 0.557034393508082, 0.130694203775342,
                                       15.9882068024571, 579.15817042274, 24.0657052758223, 0.60016655999309,
-                                      0.570258196480784, 0.610285976634783, 0.701101406916865, 0.34352987256172,
+                                      0.570258196480784, 0.610285976634783, 0.701101406916865, 0.290048346693003,
                                       "debMiss30"))
 })
 
@@ -149,10 +149,10 @@ test_that("Split-half coefficient plot matches", {
 test_that("Probability that Reliability Coefficient is Larger than 0.10 and Smaller than 0.30 table results match", {
   table <- results[["results"]][["stateContainer"]][["collection"]][["stateContainer_probabilityTable"]][["data"]]
   jaspTools::expect_equal_tables(table,
-                                 list(0.0577777777777778, 0.257579474218955, "McDonald's <unicode>",
-                                      0.02, 0.215729634402404, "Cronbach's <unicode>", 0.0466666666666667,
-                                      0.117470293201849, "Guttman's <unicode>2", 0.0311111111111111,
-                                      0.17832732579236, "Split-half coefficient"))
+                                 list(0.0577777777777778, 0.265959822267112, "McDonald's <unicode>",
+                                      0.02, 0.216415599444382, "Cronbach's <unicode>", 0.0466666666666667,
+                                      0.118807490541185, "Guttman's <unicode>2", 0.0311111111111111,
+                                      0.18514520099322, "Split-half coefficient"))
 })
 
 test_that("Bayesian Scale Reliability Statistics table results match", {
@@ -166,8 +166,8 @@ test_that("Bayesian Scale Reliability Statistics table results match", {
                                       "Split-half coefficient", 230.775018048141, 0.034740639014565,
                                       -0.0285630091427927, 1.01483470504985, 0.103284931284403, "Average interitem correlation",
                                       414.536145329942, 0.142232495514273, 0.0612110191516504, 1.01625374834437,
-                                      0.221618551302267, "Mean", "", 2.8581975155295, "", "", "",
-                                      "Variance", "", 19.2886479310878, "", "", "", "SD", "", 4.39188432578635,
+                                      0.221618551302267, "Mean", "", 3.84634693681714, "", "", "",
+                                      "Variance", "", 24.199868080485, "", "", "", "SD", "", 4.91933614225385,
                                       "", "", ""))
 })
 
@@ -420,4 +420,24 @@ test_that("Cronbach's alpha plot item deleted plot matches ordered by mean", {
   plotName <- results[["results"]][["stateContainer"]][["collection"]][["stateContainer_plotContainerItem"]][["collection"]][["stateContainer_plotContainerItem_alpha"]][["data"]]
   testPlot <- results[["state"]][["figures"]][[plotName]][["obj"]]
   jaspTools::expect_equal_plots(testPlot, "cronbach-s-alpha-item-mean-ordered")
+})
+
+# a missing item must never count as 0 in a sum score (jasp-issues#4726)
+test_that("Bayesian sum-score statistics use complete rows under pairwise deletion", {
+  missingAsZeroData <- data.frame(i1 = c(3, 4, 4, 3, 4, 4, 5, 5, 2, 5, 3, 2),
+                                  i2 = c(3, NA, 5, 3, 4, 3, NA, 6, 3, 6, 3, 3),
+                                  i3 = c(4, 4, 4, 3, 5, 4, 5, 5, 3, 4, 3, 4))
+  optionsMis <- analysisOptions("reliabilityUnidimensionalBayesian")
+  optionsMis$variables  <- c("i1", "i2", "i3")
+  optionsMis$scaleOmega <- FALSE
+  optionsMis$scaleMean  <- TRUE
+  optionsMis$scaleSd    <- TRUE
+  optionsMis$setSeed    <- TRUE
+  set.seed(1)
+  resultsMis <- runAnalysis("reliabilityUnidimensionalBayesian", missingAsZeroData, optionsMis, makeTests = FALSE)
+
+  complete  <- missingAsZeroData[complete.cases(missingAsZeroData), ]
+  scaleData <- resultsMis[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]]
+  estimates <- vapply(scaleData, function(x) x[["estimate"]], numeric(1))
+  expect_equal(estimates, c(mean(rowSums(complete)), sd(rowSums(complete))), tolerance = 1e-10)  # 11.30, 2.791
 })

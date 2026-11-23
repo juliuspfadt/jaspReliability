@@ -254,17 +254,19 @@ test_that("Missing data with Bayesian imputation: scale table matches", {
     list("McDonald's <unicode><unicode>", 0.019340538119256, 0.000442576423266648,
          0.0593915898253003, "McDonald's <unicode><unicode>", 0.00705767855380868,
          1.13757216238552e-08, 0.0292217131671469, "Average interitem correlation",
-         0.036435948452956, "", "", "Mean", 7.60957855316, "", "", "SD",
-         20.928784371066, "", ""))
+         0.036435948452956, "", "", "Mean", 10.1825294300143, "", "", "SD",
+         24.5540789060966, "", ""))
 })
 
-# imputation keeps all rows, so item-rest correlations use pairwise complete observations
+# sum and rest scores exist only for complete rows, so under imputation the scale mean and SD and
+# the item-rest correlations equal the listwise ones below; a missing item used to count as 0
+# (jasp-issues#4726)
 test_that("Missing data with Bayesian imputation: item-rest correlations match", {
   table <- resultsMissImp[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
   jaspTools::expect_equal_tables(table,
-    list("contNormal", -0.109528587852968, "contcor1", -0.0211291743290384,
-         "contcor2", 0.0484455731336876, "debMiss30", 0.0260155552428289,
-         "contGamma", 0.14366359620374, "contOutlier", 0.0218132665525293))
+    list("contNormal", -0.151944850496581, "contcor1", -0.0815927556893976,
+         "contcor2", 0.0398453253170278, "debMiss30", 0.0260155552428289,
+         "contGamma", 0.167208636470416, "contOutlier", 0.0343903439383511))
 })
 
 optionsMiss$naAction <- "listwise"
@@ -282,8 +284,8 @@ test_that("Missing data with listwise deletion: scale table matches", {
          24.5540789060966, "", ""))
 })
 
-# listwise deletion must restrict the item-rest correlations to the complete cases the fit used,
-# so these differ from the pairwise values above (70 of 100 rows are complete)
+# listwise deletion must restrict the item-rest correlations to the complete cases the fit used
+# (70 of 100 rows are complete)
 test_that("Missing data with listwise deletion: item-rest correlations use complete cases", {
   table <- resultsMissLw[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
   jaspTools::expect_equal_tables(table,
@@ -524,4 +526,34 @@ test_that("Three group factors drop the identification warning", {
   scaleTable <- resultsIdent[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]]
   notes      <- paste(vapply(scaleTable[["footnotes"]], function(x) x[["text"]], character(1)), collapse = " ")
   expect_false(grepl("up to their product", notes))
+})
+
+# a missing item must never count as 0 in a sum or rest score (jasp-issues#4726)
+test_that("Scale SD and item-rest correlations ignore incomplete rows", {
+  missingAsZeroData <- data.frame(a1 = c(3, 4, 4, 3, 4, 4, 5, 5, 2, 5, 3, 2),
+                                  a2 = c(3, NA, 5, 3, 4, 3, NA, 6, 3, 6, 3, 3),
+                                  a3 = c(4, 4, 4, 3, 5, 4, 5, 5, 3, 4, 3, 4),
+                                  b1 = c(2, 3, 4, 2, 4, 3, 5, 4, 2, 5, 3, 2),
+                                  b2 = c(3, 3, 5, 2, 4, 3, 4, 5, 2, 4, 2, 3),
+                                  b3 = c(2, 4, 4, 3, 5, 3, 5, 4, 3, 5, 3, 2))
+  optionsMis <- analysisOptions("reliabilityMultidimensionalBayesian")
+  optionsMis$factors <- list(list(indicators = c("a1", "a2", "a3"), name = "Factor1", title = "Factor 1"),
+                             list(indicators = c("b1", "b2", "b3"), name = "Factor2", title = "Factor 2"))
+  optionsMis$itemRestCorrelation <- TRUE
+  optionsMis$samples             <- 100
+  optionsMis$burnin              <- 30
+  optionsMis$chains              <- 2
+  optionsMis$setSeed             <- TRUE
+  set.seed(1)
+  resultsMis <- runAnalysis("reliabilityMultidimensionalBayesian", missingAsZeroData, optionsMis, makeTests = FALSE)
+
+  complete  <- missingAsZeroData[complete.cases(missingAsZeroData), ]
+  scaleData <- resultsMis[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]]
+  scaleSd   <- Filter(function(x) x[["coefficient"]] == "SD", scaleData)[[1]][["estimate"]]
+  expect_equal(scaleSd, sd(rowSums(complete)), tolerance = 1e-10)  # 5.744
+
+  itemData <- resultsMis[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+  restCor  <- vapply(itemData, function(x) x[["itemRestCorrelation"]], numeric(1))
+  expect_equal(restCor, vapply(1:6, function(i) cor(complete[, i], rowSums(complete[, -i])), numeric(1)),
+               tolerance = 1e-10)  # a1: 0.8850
 })

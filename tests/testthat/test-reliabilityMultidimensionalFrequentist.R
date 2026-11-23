@@ -369,3 +369,30 @@ test_that("Item-rest correlation ignores respondents without any other observed 
   # with the invented zero rest scores the correlation was -0.535
   expect_equal(restCor, expected, tolerance = 1e-6)
 })
+
+# a missing item must never count as 0 in a sum or rest score (jasp-issues#4726)
+test_that("Scale SD and item-rest correlations ignore incomplete rows", {
+  missingAsZeroData <- data.frame(a1 = c(3, 4, 4, 3, 4, 4, 5, 5, 2, 5, 3, 2),
+                                  a2 = c(3, NA, 5, 3, 4, 3, NA, 6, 3, 6, 3, 3),
+                                  a3 = c(4, 4, 4, 3, 5, 4, 5, 5, 3, 4, 3, 4),
+                                  b1 = c(2, 3, 4, 2, 4, 3, 5, 4, 2, 5, 3, 2),
+                                  b2 = c(3, 3, 5, 2, 4, 3, 4, 5, 2, 4, 2, 3),
+                                  b3 = c(2, 4, 4, 3, 5, 3, 5, 4, 3, 5, 3, 2))
+  optionsMis <- analysisOptions("reliabilityMultidimensionalFrequentist")
+  optionsMis$factors <- list(list(indicators = c("a1", "a2", "a3"), name = "Factor1", title = "Factor 1"),
+                             list(indicators = c("b1", "b2", "b3"), name = "Factor2", title = "Factor 2"))
+  optionsMis$itemRestCorrelation <- TRUE
+  optionsMis$setSeed             <- TRUE
+  set.seed(1)
+  resultsMis <- runAnalysis("reliabilityMultidimensionalFrequentist", missingAsZeroData, optionsMis, makeTests = FALSE)
+
+  complete  <- missingAsZeroData[complete.cases(missingAsZeroData), ]
+  scaleData <- resultsMis[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]]
+  scaleSd   <- Filter(function(x) x[["coefficient"]] == "SD", scaleData)[[1]][["estimate"]]
+  expect_equal(scaleSd, sd(rowSums(complete)), tolerance = 1e-10)  # 5.744
+
+  itemData <- resultsMis[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+  restCor  <- vapply(itemData, function(x) x[["itemRestCorrelation"]], numeric(1))
+  expect_equal(restCor, vapply(1:6, function(i) cor(complete[, i], rowSums(complete[, -i])), numeric(1)),
+               tolerance = 1e-10)  # a1: 0.8850
+})

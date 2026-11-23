@@ -157,6 +157,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
 
     # check if any items correlate negatively with the scale
     model[["footnote"]] <- sprintf("%s%s", model[["footnote"]], .checkLoadings(dataset, options[["variables"]]))
+    model[["scoresFootnote"]] <- .incompleteScoresFootnote(dataset)
   }
 
   jaspBase::.setSeedJASP(options)
@@ -674,10 +675,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (is.null(out))
     out <- list()
   if (options[["scaleMean"]] && is.null(model[["empty"]])) {
-    out[["est"]] <- if (options[["meanSdScoresMethod"]] == "sumScores")
-      mean(rowSums(dataset, na.rm = TRUE))
-    else
-      mean(rowMeans(dataset, na.rm = TRUE))
+    out[["est"]] <- mean(.scaleScores(dataset, options[["meanSdScoresMethod"]]))
 
     out[["cred"]] <- c(NA_real_, NA_real_)
 
@@ -698,10 +696,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (is.null(out))
     out <- list()
   if (options[["scaleVar"]] && is.null(model[["empty"]])) {
-    out[["est"]] <- if (options[["meanSdScoresMethod"]] == "sumScores")
-      var(rowSums(dataset, na.rm = TRUE))
-    else
-      var(rowMeans(dataset, na.rm = TRUE))
+    out[["est"]] <- var(.scaleScores(dataset, options[["meanSdScoresMethod"]]))
 
     out[["cred"]] <- c(NA_real_, NA_real_)
 
@@ -723,10 +718,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (is.null(out))
     out <- list()
   if (options[["scaleSd"]] && is.null(model[["empty"]])) {
-    out[["est"]] <- if (options[["meanSdScoresMethod"]] == "sumScores")
-      sd(rowSums(dataset, na.rm = TRUE))
-    else
-      sd(rowMeans(dataset, na.rm = TRUE))
+    out[["est"]] <- sd(.scaleScores(dataset, options[["meanSdScoresMethod"]]))
 
     out[["cred"]] <- c(NA_real_, NA_real_)
 
@@ -756,7 +748,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
 
       jaspBase::.setSeedJASP(options)
       out[["itemSamp"]] <- .itemRestCorrelation(dataset, options[["samples"]], options[["burnin"]],
-                                        options[["thinning"]], options[["chains"]], model[["pairwise"]],
+                                        options[["thinning"]], options[["chains"]],
                                         callback = progressbarTick, options[["inverseWishartPriorScale"]],
                                         options[["inverseWishartPriorDf"]])
     }
@@ -1138,6 +1130,8 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (model[["footnote"]] != "") {
     scaleTable$addFootnote(model[["footnote"]])
   }
+  if (any(unlist(options[c("scaleMean", "scaleVar", "scaleSd")])) && isTRUE(model[["scoresFootnote"]] != ""))
+    scaleTable$addFootnote(model[["scoresFootnote"]])
 
   return()
 }
@@ -1235,6 +1229,8 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (footnote != "") {
     itemTable$addFootnote(footnote)
   }
+  if (options[["itemRestCorrelation"]] && isTRUE(model[["scoresFootnote"]] != ""))
+    itemTable$addFootnote(model[["scoresFootnote"]])
 
   itemTable$position <- 2
   stateContainer <- .getStateContainerB(jaspResults)
@@ -1951,13 +1947,15 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
 }
 
 
-.itemRestCorrelation <- function(dataset, n.iter, n.burnin, thin, n.chains, pairwise, callback, k0, df0) {
+.itemRestCorrelation <- function(dataset, n.iter, n.burnin, thin, n.chains, callback, k0, df0) {
 
   ircor_samp <- matrix(0, n.chains * length(seq(1, n.iter - n.burnin, thin)), ncol(dataset))
   for (i in seq(ncol(dataset))) {
-    help_dat <- cbind(as.matrix(dataset[, i]), rowSums(as.matrix(dataset[, -i]), na.rm = TRUE))
+    # only respondents with the item and a rest score, i.e., without missing values
+    help_dat <- cbind(as.matrix(dataset[, i]), .restScores(dataset, i))
+    help_dat <- help_dat[complete.cases(help_dat), , drop = FALSE]
     ircor_samp[, i] <- .WishartCorTransform(help_dat, n.iter = n.iter, n.burnin = n.burnin, thin = thin,
-                                            n.chains = n.chains, pairwise = pairwise, callback = callback, k0, df0)
+                                            n.chains = n.chains, pairwise = FALSE, callback = callback, k0, df0)
   }
 
   return(ircor_samp)

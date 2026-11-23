@@ -97,27 +97,27 @@ test_that("Frequentist Individual Item Reliability Statistics table results matc
                                  list(3.71246492618525e-05, -0.032393035453925, -0.00527770593544932,
                                       -0.0093520914049856, -0.396193843016565, 0.863588070980427,
                                       0.929294394140214, 0.0192598705478673, 0.0144681758066313, 0.0162871794638591,
-                                      0.198462015554176, -0.18874858754, 1.1202393681253, 1.05841360919316,
+                                      0.173020618464123, -0.18874858754, 1.1202393681253, 1.05841360919316,
                                       0.075346314048224, 0.0573146999248539, 0.0608997002452966, 0.375215704411214,
                                       0.018696667936565, 1.51175115136297, 1.22953289966677, "contNormal",
                                       0.00154980754347149, -0.0124418579566558, -0.000420287856866242,
                                       -0.0492644454996841, -0.145768057146445, 0.789256791250214,
                                       0.888401255768031, 0.030930851258905, 0.0233203074068998, 0.02887162264849,
-                                      0.175373623695169, 0.05254867287, 1.02381744124251, 1.01183864387684,
+                                      0.124556018058705, 0.05254867287, 1.02381744124251, 1.01183864387684,
                                       0.0795418575844302, 0.0581030751697449, 0.0652065770036478,
                                       0.309692874988231, 0.250865402886445, 1.38163078322628, 1.17542791494259,
                                       "contcor1", 0.00518404408870834, -0.00124256598622769, 0.00365304316618711,
                                       -0.143295963248798, -0.127121582920542, 0.777306709422078, 0.881649992583269,
                                       0.0466790689222428, 0.0346056750405157, 0.0377062864873144,
-                                      0.0481023174485831, 0.06968807084, 1.00831589303215, 1.0041493380131,
+                                      0.0334660183364017, 0.06968807084, 1.00831589303215, 1.0041493380131,
                                       0.0984160395516825, 0.0708166876811237, 0.0765991255472786,
                                       0.212626162715547, 0.266497724600542, 1.36071160825196, 1.16649543859029,
                                       "contcor2", 0.533395306905801, 0.316676004777833, 0.470440814190599,
-                                      -0.061581356597092, 11.2714152421404, 446.470728863, 21.129853971644,
+                                      -0.061581356597092, 10.3505625852996, 425.776861539385, 20.6343611856385,
                                       0.671633441261487, 0.535041083185576, 0.60068713700511, 0.122450817493202,
                                       15.9882068024571, 579.15817042274, 24.0657052758223, 0.77012646283331,
-                                      0.671487308870688, 0.696679032007608, 0.30241630495653, 20.7049983627739,
-                                      781.567811192939, 27.9565343201359, "debMiss30"))
+                                      0.671487308870688, 0.696679032007608, 0.30241630495653, 21.6258510196147,
+                                      833.857318969637, 28.8765877307143, "debMiss30"))
 })
 
 test_that("Frequentist Scale Reliability Statistics table results match", {
@@ -129,11 +129,11 @@ test_that("Frequentist Scale Reliability Statistics table results match", {
                                       0.0786531222994487, "Guttman's <unicode>2", 0.0392336793613145,
                                       0.0047666061688859, 0.0220147009193286, 0.0878218264568904,
                                       "Average interitem correlation", 0.184127369413486, 0.0939902180995728,
-                                      0.0503714335248153, 0.286242462411683, "Mean", 2.764059782725,
-                                      1.68976265760682, 0.548120849970767, 3.83835690784319, "Variance",
-                                      30.0436466172676, 23.1605276208449, 4.27021798715751, 40.5435826102092,
-                                      "SD", 5.48120849970767, 4.81253858382921, 0.398960116131913,
-                                      6.36738428322095))
+                                      0.0503714335248153, 0.286242462411683, "Mean", 4.04721938530714,
+                                      2.6153706800731, 0.730548477690554, 5.47906809054119, "Variance",
+                                      37.359075477919, 27.4650876381331, 6.36043139673752, 53.7886541330553,
+                                      "SD", 6.11220708729007, 5.24071442058553, 0.467596023364248,
+                                      7.33407486552021))
 })
 
 
@@ -313,4 +313,37 @@ test_that("Frequentist Scale Reliability Statistics table shows NA omega row ins
                                       0.597254074796816, 1.16601753408189,
                                       "Average interitem correlation", -0.00992751206887806,
                                       -0.400238736783369, 0.199142039238076, 0.380383712645613))
+})
+
+# a missing item must never count as 0 in a sum score, and item CIs use each item's own n
+# (jasp-issues#4726); expected values are those of the 10 complete rows
+missingAsZeroData <- data.frame(i1 = c(3, 4, 4, 3, 4, 4, 5, 5, 2, 5, 3, 2),
+                                i2 = c(3, NA, 5, 3, 4, 3, NA, 6, 3, 6, 3, 3),
+                                i3 = c(4, 4, 4, 3, 5, 4, 5, 5, 3, 4, 3, 4))
+options <- analysisOptions("reliabilityUnidimensionalFrequentist")
+options$variables           <- c("i1", "i2", "i3")
+options$scaleOmega          <- FALSE
+options$scaleMean           <- TRUE
+options$scaleSd             <- TRUE
+options$itemRestCorrelation <- TRUE
+options$itemMean            <- TRUE
+set.seed(1)
+results <- runAnalysis("reliabilityUnidimensionalFrequentist", missingAsZeroData, options, makeTests = FALSE)
+
+test_that("Sum-score statistics use complete rows under pairwise deletion", {
+  complete  <- missingAsZeroData[complete.cases(missingAsZeroData), ]
+  scaleData <- results[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]]
+  estimates <- vapply(scaleData[["data"]], function(x) x[["estimate"]], numeric(1))
+  expect_equal(estimates, c(mean(rowSums(complete)), sd(rowSums(complete))), tolerance = 1e-10)  # 11.30, 2.791
+  expect_true(any(grepl("10 of 12 observations", vapply(scaleData[["footnotes"]], `[[`, "", "text"))))
+
+  itemData <- results[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+  restCor  <- vapply(itemData, function(x) x[["pointEstimate5"]], numeric(1))
+  expect_equal(restCor, vapply(1:3, function(i) cor(complete[, i], rowSums(complete[, -i])), numeric(1)),
+               tolerance = 1e-10)  # i1: 0.8508
+
+  # i2 has 10 observations, not 12
+  i2 <- na.omit(missingAsZeroData$i2)
+  expect_equal(c(itemData[[2]][["lower6"]], itemData[[2]][["upper6"]]),
+               mean(i2) + c(-1, 1) * qnorm(0.975) * sd(i2) / sqrt(10), tolerance = 1e-10)  # 3.103, 4.697
 })

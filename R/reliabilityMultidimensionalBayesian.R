@@ -308,8 +308,7 @@ reliabilityMultidimensionalBayesianInternal <- function(jaspResults, dataset, op
   rows[[length(rows) + 1L]] <- addStatRow(gettext("Average interitem correlation"), mean(cc[lower.tri(cc)]))
 
   scoreData <- .multiDimAnalysisData(dataset, options)
-  scores    <- if (options[["meanSdScoresMethod"]] == "sumScores")
-    rowSums(scoreData, na.rm = TRUE) else rowMeans(scoreData, na.rm = TRUE)
+  scores    <- .scaleScores(scoreData, options[["meanSdScoresMethod"]])
   rows[[length(rows) + 1L]] <- addStatRow(gettext("Mean"), mean(scores))
   rows[[length(rows) + 1L]] <- addStatRow(gettext("SD"), sd(scores))
 
@@ -318,6 +317,9 @@ reliabilityMultidimensionalBayesianInternal <- function(jaspResults, dataset, op
 
   if (footnote != "")
     scaleTable$addFootnote(footnote)
+  scoresFootnote <- .incompleteScoresFootnote(scoreData)
+  if (scoresFootnote != "")
+    scaleTable$addFootnote(scoresFootnote)
 
   return()
 }
@@ -400,8 +402,7 @@ reliabilityMultidimensionalBayesianInternal <- function(jaspResults, dataset, op
   if (showRest) {
     restData <- .multiDimAnalysisData(dataset, options)
     df$itemRestCorrelation <- vapply(seq_along(allItems), function(i) {
-      rest <- rowSums(restData[, -i, drop = FALSE], na.rm = TRUE)
-      cor(restData[, i], rest, use = "pairwise.complete.obs")
+      cor(restData[, i], .restScores(restData, i), use = "pairwise.complete.obs")
     }, numeric(1))
   }
 
@@ -409,6 +410,8 @@ reliabilityMultidimensionalBayesianInternal <- function(jaspResults, dataset, op
 
   if (footnote != "")
     itemTable$addFootnote(footnote)
+  if (showRest && .incompleteScoresFootnote(restData) != "")
+    itemTable$addFootnote(.incompleteScoresFootnote(restData))
   if (length(options[["reverseScaledItems"]]) > 0L)
     itemTable$addFootnote(.addFootnoteReverseScaledItems(options))
 
