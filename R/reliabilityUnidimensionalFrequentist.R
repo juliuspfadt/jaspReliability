@@ -159,6 +159,10 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
     startProgressbar(options[["bootstrapSamples"]])
 
     if (options[["bootstrapType"]] == "parametric") {
+      # a pairwise covariance matrix need not be positive (semi)definite, and then there is no normal
+      # distribution to draw from; MASS::mvrnorm() would stop with an uninformative error
+      if (!.isPsdForMvrnorm(cc))
+        .quitAnalysis(gettext("The parametric bootstrap draws from a normal distribution with the covariance matrix of the items, but the pairwise covariance matrix of these data is not positive definite. Choose the non-parametric bootstrap, or 'Delete listwise' under 'Missing Values'."))
       model[["parametric"]] <- TRUE
       for (i in seq_len(options[["bootstrapSamples"]])) {
         boot_data <- MASS::mvrnorm(n, colMeans(dataset, na.rm = TRUE), cc)
@@ -1530,6 +1534,15 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
   if (length(scores) < .minCompleteRows)
     return(NA_real_)
   return(fun(scores))
+}
+
+# the check MASS::mvrnorm() applies to its covariance matrix (default tolerance), so we can stop
+# with a useful message before it fails
+.isPsdForMvrnorm <- function(sigma, tol = 1e-6) {
+  if (anyNA(sigma))
+    return(FALSE)
+  ev <- eigen(sigma, symmetric = TRUE, only.values = TRUE)$values
+  return(all(ev >= -tol * abs(ev[1L])))
 }
 
 # sum of all items but item i; NA for a respondent missing any of those items

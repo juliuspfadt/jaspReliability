@@ -413,13 +413,19 @@ test_that("No complete rows gives empty score statistics instead of an error", {
     itemRows <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
     expect_true(all(vapply(itemRows, function(x) identical(x[["pointEstimate5"]], ""), logical(1))), label = method)
   }
-  # only the non-parametric bootstrap: the parametric one draws from the pairwise covariance matrix,
-  # which is not positive definite for these data
   optionsPm$intervalMethod   <- "bootstrapped"
   optionsPm$bootstrapType    <- "nonParametric"
   optionsPm$bootstrapSamples <- 100
   resultsPm <- runAnalysis("reliabilityUnidimensionalFrequentist", plannedMissing, optionsPm, makeTests = FALSE)
   expect_identical(resultsPm[["status"]], "complete")
+
+  # the pairwise covariance matrix of these data is not positive definite, so the parametric bootstrap
+  # has nothing to draw from; this used to crash inside MASS::mvrnorm()
+  expect_false(jaspReliability:::.isPsdForMvrnorm(cov(plannedMissing, use = "pairwise.complete.obs")))
+  optionsPm$bootstrapType <- "parametric"
+  resultsPm <- runAnalysis("reliabilityUnidimensionalFrequentist", plannedMissing, optionsPm, makeTests = FALSE)
+  expect_identical(resultsPm[["status"]], "validationError")
+  expect_match(resultsPm[["results"]][["errorMessage"]], "not positive definite")
 })
 
 # at exactly 3 complete rows the scores are reported, but the Fisher-z interval of the item-rest
