@@ -577,6 +577,7 @@ test_that("No complete rows gives empty score statistics instead of an error", {
 
   scaleTable <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]]
   scoreRows  <- Filter(function(x) x[["coefficient"]] %in% c("Mean", "SD"), scaleTable[["data"]])
+  expect_length(scoreRows, 2)
   expect_true(all(vapply(scoreRows, function(x) identical(x[["estimate"]], ""), logical(1))))
   expect_true(any(grepl("only 0 of 40 are complete", vapply(scaleTable[["footnotes"]], `[[`, "", "text"))))
   itemRows <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]

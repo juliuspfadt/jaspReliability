@@ -434,11 +434,14 @@ test_that("Three complete rows: score statistics reported, analytic item-rest in
   optionsThree$variables           <- c("i1", "i2", "i3")
   optionsThree$scaleOmega          <- FALSE
   optionsThree$scaleMean           <- TRUE
+  optionsThree$scaleVar            <- TRUE
+  optionsThree$scaleSd             <- TRUE
   optionsThree$itemRestCorrelation <- TRUE
   resultsThree <- runAnalysis("reliabilityUnidimensionalFrequentist", threeComplete, optionsThree, makeTests = FALSE)
   expect_identical(resultsThree[["status"]], "complete")
-  scaleRow <- resultsThree[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]][[1]]
-  expect_equal(scaleRow[["estimate"]], mean(rowSums(threeComplete[complete.cases(threeComplete), ])))
+  scaleRows <- resultsThree[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]]
+  scores    <- rowSums(threeComplete[complete.cases(threeComplete), ])
+  expect_equal(vapply(scaleRows, function(x) x[["estimate"]], numeric(1)), c(mean(scores), var(scores), sd(scores)))
   itemRows <- resultsThree[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
   expect_true(all(vapply(itemRows, function(x) is.numeric(x[["pointEstimate5"]]) &&
                                                   identical(x[["lower5"]], "") && identical(x[["upper5"]], ""), logical(1))))
