@@ -396,3 +396,25 @@ test_that("Scale SD and item-rest correlations ignore incomplete rows", {
   expect_equal(restCor, vapply(1:6, function(i) cor(complete[, i], rowSums(complete[, -i])), numeric(1)),
                tolerance = 1e-10)  # a1: 0.8850
 })
+
+test_that("No complete rows gives empty score statistics instead of an error", {
+  set.seed(4726)
+  factorScore    <- rnorm(40)
+  plannedMissing <- as.data.frame(sapply(1:6, function(j) factorScore + rnorm(40, sd = 0.7)))
+  names(plannedMissing) <- c("a1", "a2", "a3", "b1", "b2", "b3")
+  for (i in 1:40) plannedMissing[i, (i %% 6) + 1] <- NA
+  optionsPm <- analysisOptions("reliabilityMultidimensionalFrequentist")
+  optionsPm$factors <- list(list(indicators = c("a1", "a2", "a3"), name = "Factor1", title = "Factor 1"),
+                            list(indicators = c("b1", "b2", "b3"), name = "Factor2", title = "Factor 2"))
+  optionsPm$itemRestCorrelation <- TRUE
+  optionsPm$setSeed             <- TRUE
+  resultsPm <- runAnalysis("reliabilityMultidimensionalFrequentist", plannedMissing, optionsPm, makeTests = FALSE)
+  expect_identical(resultsPm[["status"]], "complete")
+
+  scaleTable <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]]
+  scoreRows  <- Filter(function(x) x[["coefficient"]] %in% c("Mean", "SD"), scaleTable[["data"]])
+  expect_true(all(vapply(scoreRows, function(x) identical(x[["estimate"]], ""), logical(1))))
+  expect_true(any(grepl("only 0 of 40 are complete", vapply(scaleTable[["footnotes"]], `[[`, "", "text"))))
+  itemRows <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+  expect_true(all(vapply(itemRows, function(x) identical(x[["itemRestCorrelation"]], ""), logical(1))))
+})

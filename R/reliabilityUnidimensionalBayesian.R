@@ -675,7 +675,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (is.null(out))
     out <- list()
   if (options[["scaleMean"]] && is.null(model[["empty"]])) {
-    out[["est"]] <- mean(.scaleScores(dataset, options[["meanSdScoresMethod"]]))
+    out[["est"]] <- .scoreStatistic(dataset, options[["meanSdScoresMethod"]], mean)
 
     out[["cred"]] <- c(NA_real_, NA_real_)
 
@@ -696,7 +696,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (is.null(out))
     out <- list()
   if (options[["scaleVar"]] && is.null(model[["empty"]])) {
-    out[["est"]] <- var(.scaleScores(dataset, options[["meanSdScoresMethod"]]))
+    out[["est"]] <- .scoreStatistic(dataset, options[["meanSdScoresMethod"]], var)
 
     out[["cred"]] <- c(NA_real_, NA_real_)
 
@@ -718,7 +718,7 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   if (is.null(out))
     out <- list()
   if (options[["scaleSd"]] && is.null(model[["empty"]])) {
-    out[["est"]] <- sd(.scaleScores(dataset, options[["meanSdScoresMethod"]]))
+    out[["est"]] <- .scoreStatistic(dataset, options[["meanSdScoresMethod"]], sd)
 
     out[["cred"]] <- c(NA_real_, NA_real_)
 
@@ -743,7 +743,8 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
   # is box even checked?
   if (options[["itemRestCorrelation"]] && is.null(model[["empty"]])) {
 
-    if (is.null(out[["itemSamp"]])) {
+    # too few complete rows: no samples, the table shows empty cells and a footnote
+    if (is.null(out[["itemSamp"]]) && sum(complete.cases(dataset)) >= .minCompleteRows) {
       startProgressbar(options[["samples"]] * options[["chains"]] * ncol(dataset))
 
       jaspBase::.setSeedJASP(options)
@@ -944,6 +945,11 @@ reliabilityUnidimensionalBayesianInternal <- function(jaspResults, dataset, opti
       out[["est"]] <- lapply(samps, .colMedians)
     }
     out[["cred"]] <- lapply(samps, function(x) coda::HPDinterval(coda::mcmc(x), prob = ciValue))
+
+    if ("itemRestCorrelation" %in% selected && is.null(samps[["itemRestCorrelation"]])) {
+      out[["est"]][["itemRestCorrelation"]]  <- rep(NA_real_, model[["k"]])
+      out[["cred"]][["itemRestCorrelation"]] <- matrix(NA_real_, model[["k"]], 2)
+    }
 
     # check for mean and sd
     if ("itemMean" %in% selected) {

@@ -553,12 +553,16 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
     ciValue <- options[["ciLevel"]]
 
     xx <- .scaleScores(dataset, options[["meanSdScoresMethod"]])
-    out[["est"]] <- mean(xx)
-
-    zz <- qnorm(1 - (1 - ciValue) / 2)
-    out[["se"]] <- sd(xx) / sqrt(length(xx))
-    out[["conf"]] <- c(out[["est"]] - zz * out[["se"]],
-                       out[["est"]] + zz * out[["se"]])
+    if (length(xx) < .minCompleteRows) {
+      out[c("est", "se")] <- NA_real_
+      out[["conf"]] <- c(NA_real_, NA_real_)
+    } else {
+      out[["est"]] <- mean(xx)
+      zz <- qnorm(1 - (1 - ciValue) / 2)
+      out[["se"]] <- sd(xx) / sqrt(length(xx))
+      out[["conf"]] <- c(out[["est"]] - zz * out[["se"]],
+                         out[["est"]] + zz * out[["se"]])
+    }
 
 
     if (options[["samplesSavingDisabled"]])
@@ -584,15 +588,18 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
     xx <- .scaleScores(dataset, options[["meanSdScoresMethod"]])
     n  <- length(xx)
 
-    out[["est"]] <- var(xx)
-
-    if (options[["intervalMethodVar"]] == "chisq") {
+    if (n < .minCompleteRows) {
+      out[c("est", "se")] <- NA_real_
+      out[["conf"]] <- c(NA_real_, NA_real_)
+    } else if (options[["intervalMethodVar"]] == "chisq") {
+      out[["est"]] <- var(xx)
       out[["se"]] <- out[["est"]] * sqrt(2 / (n - 1))
       chiValueLow <- stats::qchisq(1 - (1 - ciValue) / 2, df = n - 1)
       chiValueHigh <- stats::qchisq((1 - ciValue) / 2, df = n - 1)
       out[["conf"]] <- c(((n - 1) * out[["est"]]) / chiValueLow,
                          ((n - 1) * out[["est"]]) / chiValueHigh)
     } else { # wald interval
+      out[["est"]] <- var(xx)
       out[["se"]] <- .seVar(x = xx)
       out[["conf"]] <- out[["est"]] + c(-1, 1) * qnorm(1 - (1 - ciValue) / 2) * out[["se"]]
     }
@@ -620,16 +627,21 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
 
     xx <- .scaleScores(dataset, options[["meanSdScoresMethod"]])
     n  <- length(xx)
-    out[["est"]] <- sd(xx)
-    out[["se"]] <- .seSd(x = xx)
 
-    if (options[["intervalMethodVar"]] == "chisq") {
-      chiValueLow <- stats::qchisq(1 - (1 - ciValue) / 2, df = n - 1)
-      chiValueHigh <- stats::qchisq((1 - ciValue) / 2, df = n - 1)
-      out[["conf"]] <- c(sqrt(((n - 1) * out[["est"]]^2) / chiValueLow),
-                         sqrt(((n - 1) * out[["est"]]^2) / chiValueHigh))
+    if (n < .minCompleteRows) {
+      out[c("est", "se")] <- NA_real_
+      out[["conf"]] <- c(NA_real_, NA_real_)
     } else {
-      out[["conf"]] <- out[["est"]] + c(-1, 1) * qnorm(1 - (1 - ciValue) / 2) * out[["se"]]
+      out[["est"]] <- sd(xx)
+      out[["se"]] <- .seSd(x = xx)
+      if (options[["intervalMethodVar"]] == "chisq") {
+        chiValueLow <- stats::qchisq(1 - (1 - ciValue) / 2, df = n - 1)
+        chiValueHigh <- stats::qchisq((1 - ciValue) / 2, df = n - 1)
+        out[["conf"]] <- c(sqrt(((n - 1) * out[["est"]]^2) / chiValueLow),
+                           sqrt(((n - 1) * out[["est"]]^2) / chiValueHigh))
+      } else {
+        out[["conf"]] <- out[["est"]] + c(-1, 1) * qnorm(1 - (1 - ciValue) / 2) * out[["se"]]
+      }
     }
 
 
@@ -657,11 +669,15 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
 
     out[["itemSamp"]] <- matrix(0, nrow = options[["bootstrapSamples"]], ncol = ncol(dataset))
     n <- model[["n"]]
-    if (options[["bootstrapType"]] == "parametric") {
-      cc <- cov(dataset, use = model[["use.cases"]])
+    # the estimate uses the complete rows only, so the parametric bootstrap mimics that estimator
+    complete <- dataset[complete.cases(dataset), , drop = FALSE]
+    if (nrow(complete) < .minCompleteRows) {
+      out[["itemSamp"]][] <- NA_real_
+    } else if (options[["bootstrapType"]] == "parametric") {
+      cc <- cov(complete)
       for (j in 1:ncol(dataset)) {
         for (b in seq_len(options[["bootstrapSamples"]])) {
-          boot_data <- MASS::mvrnorm(n, colMeans(dataset, na.rm = TRUE), cc)
+          boot_data <- MASS::mvrnorm(nrow(complete), colMeans(complete), cc)
           out[["itemSamp"]][b, j] <- cor(as.matrix(boot_data[, j]), .restScores(boot_data, j),
                                          use = model[["use.cases"]])
           progressbarTick()
@@ -1195,7 +1211,14 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
     # item-rest correlation
     if (options[["itemRestCorrelation"]]) {
 
+      tooFew <- sum(complete.cases(dataset)) < .minCompleteRows
       for (i in seq_len(ncol(dataset))) {
+        if (tooFew) {
+          out[["est"]][["itemRestCorrelation"]][i] <- NA_real_
+          out[["lower"]][["itemRestCorrelation"]][i] <- NA_real_
+          out[["upper"]][["itemRestCorrelation"]][i] <- NA_real_
+          next
+        }
         sum1 <- as.matrix(dataset[, i])
         sum2 <- .restScores(dataset, i)
         cc <- cor(sum1, sum2, use = model[["use.cases"]])
@@ -1501,15 +1524,29 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
   return(scores[!is.na(scores)])
 }
 
+# a statistic of the scale scores, NA when too few rows are complete to compute it
+.scoreStatistic <- function(dataset, method, fun) {
+  scores <- .scaleScores(dataset, method)
+  if (length(scores) < .minCompleteRows)
+    return(NA_real_)
+  return(fun(scores))
+}
+
 # sum of all items but item i; NA for a respondent missing any of those items
 .restScores <- function(dataset, i) {
   return(rowSums(as.matrix(dataset)[, -i, drop = FALSE]))
 }
 
+# statistics of scale and rest scores need as many complete rows as .checkErrors demands per variable
+.minCompleteRows <- 3L
+
 .incompleteScoresFootnote <- function(dataset) {
   nComplete <- sum(complete.cases(dataset))
   if (nComplete == nrow(dataset))
     return("")
+  if (nComplete < .minCompleteRows)
+    return(gettextf("Scale scores and rest scores need at least %1$i observations without missing values, but only %2$i of %3$i are complete.",
+                    .minCompleteRows, nComplete, nrow(dataset)))
   return(gettextf("Scale scores and rest scores are only computed for the %1$i of %2$i observations without missing values.",
                   nComplete, nrow(dataset)))
 }
@@ -2207,6 +2244,8 @@ reliabilityUnidimensionalFrequentistInternal <- function(jaspResults, dataset, o
 
 # fisher transformed correlation interval
 .confCorZ <- function(cr, n, alpha) {
+  if (n <= 3) # the standard error 1 / sqrt(n - 3) is not finite
+    return(c(NA_real_, NA_real_))
   zcor <- 0.5 * log((1 + cr) / (1  - cr))
   seZcor <- 1 / sqrt(n - 3)
   qq <- qnorm(1 - (1 - alpha) / 2)

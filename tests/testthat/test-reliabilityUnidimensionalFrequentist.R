@@ -95,28 +95,28 @@ test_that("Frequentist Individual Item Reliability Statistics table results matc
   table <- results[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
   jaspTools::expect_equal_tables(table,
                                  list(3.71246492618525e-05, -0.032393035453925, -0.00527770593544932,
-                                      -0.0093520914049856, -0.396193843016565, 0.863588070980427,
+                                      -0.0611728387549813, -0.396193843016565, 0.863588070980427,
                                       0.929294394140214, 0.0192598705478673, 0.0144681758066313, 0.0162871794638591,
                                       0.173020618464123, -0.18874858754, 1.1202393681253, 1.05841360919316,
-                                      0.075346314048224, 0.0573146999248539, 0.0608997002452966, 0.375215704411214,
+                                      0.075346314048224, 0.0573146999248539, 0.0608997002452966, 0.361292186697729,
                                       0.018696667936565, 1.51175115136297, 1.22953289966677, "contNormal",
                                       0.00154980754347149, -0.0124418579566558, -0.000420287856866242,
-                                      -0.0492644454996841, -0.145768057146445, 0.789256791250214,
+                                      -0.0854189976777213, -0.145768057146445, 0.789256791250214,
                                       0.888401255768031, 0.030930851258905, 0.0233203074068998, 0.02887162264849,
                                       0.124556018058705, 0.05254867287, 1.02381744124251, 1.01183864387684,
                                       0.0795418575844302, 0.0581030751697449, 0.0652065770036478,
-                                      0.309692874988231, 0.250865402886445, 1.38163078322628, 1.17542791494259,
+                                      0.342092622199606, 0.250865402886445, 1.38163078322628, 1.17542791494259,
                                       "contcor1", 0.00518404408870834, -0.00124256598622769, 0.00365304316618711,
-                                      -0.143295963248798, -0.127121582920542, 0.777306709422078, 0.881649992583269,
+                                      -0.18783579315735, -0.127121582920542, 0.777306709422078, 0.881649992583269,
                                       0.0466790689222428, 0.0346056750405157, 0.0377062864873144,
                                       0.0334660183364017, 0.06968807084, 1.00831589303215, 1.0041493380131,
                                       0.0984160395516825, 0.0708166876811237, 0.0765991255472786,
-                                      0.212626162715547, 0.266497724600542, 1.36071160825196, 1.16649543859029,
+                                      0.241709224058922, 0.266497724600542, 1.36071160825196, 1.16649543859029,
                                       "contcor2", 0.533395306905801, 0.316676004777833, 0.470440814190599,
-                                      -0.061581356597092, 10.3505625852996, 425.776861539385, 20.6343611856385,
+                                      -0.148685016166698, 10.3505625852996, 425.776861539385, 20.6343611856385,
                                       0.671633441261487, 0.535041083185576, 0.60068713700511, 0.122450817493202,
                                       15.9882068024571, 579.15817042274, 24.0657052758223, 0.77012646283331,
-                                      0.671487308870688, 0.696679032007608, 0.30241630495653, 21.6258510196147,
+                                      0.671487308870688, 0.696679032007608, 0.363296977999719, 21.6258510196147,
                                       833.857318969637, 28.8765877307143, "debMiss30"))
 })
 
@@ -346,4 +346,100 @@ test_that("Sum-score statistics use complete rows under pairwise deletion", {
   i2 <- na.omit(missingAsZeroData$i2)
   expect_equal(c(itemData[[2]][["lower6"]], itemData[[2]][["upper6"]]),
                mean(i2) + c(-1, 1) * qnorm(0.975) * sd(i2) / sqrt(10), tolerance = 1e-10)  # 3.103, 4.697
+})
+
+test_that("Interval n under pairwise deletion: complete rows for scores, item's own n for items", {
+  optionsN <- analysisOptions("reliabilityUnidimensionalFrequentist")
+  optionsN$variables           <- c("i1", "i2", "i3")
+  optionsN$scaleOmega          <- FALSE
+  optionsN$scaleVar            <- TRUE
+  optionsN$itemRestCorrelation <- TRUE
+  optionsN$itemVar             <- TRUE
+  resultsN <- runAnalysis("reliabilityUnidimensionalFrequentist", missingAsZeroData, optionsN, makeTests = FALSE)
+
+  complete <- missingAsZeroData[complete.cases(missingAsZeroData), ]
+  chisqCI  <- function(v, n) (n - 1) * v / qchisq(c(0.975, 0.025), n - 1)
+
+  scaleRow <- resultsN[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]][[1]]
+  expect_equal(c(scaleRow[["lower"]], scaleRow[["upper"]]), chisqCI(var(rowSums(complete)), 10), tolerance = 1e-10)
+
+  itemRows <- resultsN[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+  i2 <- na.omit(missingAsZeroData$i2)
+  expect_equal(c(itemRows[[2]][["lower7"]], itemRows[[2]][["upper7"]]), chisqCI(var(i2), 10), tolerance = 1e-10)
+  restCI <- tanh(atanh(itemRows[[1]][["pointEstimate5"]]) + c(-1, 1) * qnorm(0.975) / sqrt(10 - 3))
+  expect_equal(c(itemRows[[1]][["lower5"]], itemRows[[1]][["upper5"]]), restCI, tolerance = 1e-10)
+})
+
+# the parametric bootstrap must mimic the complete-row estimator, so incomplete rows do not change it
+test_that("Parametric bootstrap of item-rest correlations ignores incomplete rows", {
+  optionsBoot <- analysisOptions("reliabilityUnidimensionalFrequentist")
+  optionsBoot$variables           <- c("i1", "i2", "i3")
+  optionsBoot$scaleOmega          <- FALSE
+  optionsBoot$itemRestCorrelation <- TRUE
+  optionsBoot$intervalMethod      <- "bootstrapped"
+  optionsBoot$bootstrapType       <- "parametric"
+  optionsBoot$bootstrapSamples    <- 200
+  optionsBoot$setSeed             <- TRUE
+  itemCI <- function(dataset) {
+    res <- runAnalysis("reliabilityUnidimensionalFrequentist", dataset, optionsBoot, makeTests = FALSE)
+    lapply(res[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]],
+           function(x) c(x[["pointEstimate5"]], x[["lower5"]], x[["upper5"]]))
+  }
+  expect_equal(itemCI(missingAsZeroData), itemCI(missingAsZeroData[complete.cases(missingAsZeroData), ]),
+               tolerance = 1e-10)
+})
+
+# planned missingness: every pair of items observed, but no respondent answered all items
+test_that("No complete rows gives empty score statistics instead of an error", {
+  set.seed(4726)
+  factorScore    <- rnorm(40)
+  plannedMissing <- as.data.frame(sapply(1:4, function(j) factorScore + rnorm(40, sd = 0.7)))
+  for (i in 1:40) plannedMissing[i, (i %% 4) + 1] <- NA
+  optionsPm <- analysisOptions("reliabilityUnidimensionalFrequentist")
+  optionsPm$variables           <- paste0("V", 1:4)
+  optionsPm$scaleMean           <- TRUE
+  optionsPm$scaleVar            <- TRUE
+  optionsPm$scaleSd             <- TRUE
+  optionsPm$itemRestCorrelation <- TRUE
+  for (method in c("chisq", "twostep")) {
+    optionsPm$intervalMethodVar <- method
+    resultsPm <- runAnalysis("reliabilityUnidimensionalFrequentist", plannedMissing, optionsPm, makeTests = FALSE)
+    expect_identical(resultsPm[["status"]], "complete", label = method)
+    scaleTable <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]]
+    scoreRows  <- Filter(function(x) x[["coefficient"]] %in% c("Mean", "Variance", "SD"), scaleTable[["data"]])
+    expect_length(scoreRows, 3)
+    expect_true(all(vapply(scoreRows, function(x) identical(x[["estimate"]], ""), logical(1))), label = method)
+    expect_true(any(grepl("only 0 of 40 are complete", vapply(scaleTable[["footnotes"]], `[[`, "", "text"))))
+    itemRows <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+    expect_true(all(vapply(itemRows, function(x) identical(x[["pointEstimate5"]], ""), logical(1))), label = method)
+  }
+  # only the non-parametric bootstrap: the parametric one draws from the pairwise covariance matrix,
+  # which is not positive definite for these data
+  optionsPm$intervalMethod   <- "bootstrapped"
+  optionsPm$bootstrapType    <- "nonParametric"
+  optionsPm$bootstrapSamples <- 100
+  resultsPm <- runAnalysis("reliabilityUnidimensionalFrequentist", plannedMissing, optionsPm, makeTests = FALSE)
+  expect_identical(resultsPm[["status"]], "complete")
+})
+
+# at exactly 3 complete rows the scores are reported, but the Fisher-z interval of the item-rest
+# correlation (standard error 1 / sqrt(n - 3)) is not defined and must stay empty, not NaN
+test_that("Three complete rows: score statistics reported, analytic item-rest interval empty", {
+  threeComplete <- missingAsZeroData
+  threeComplete[2, "i2"] <- 4; threeComplete[7, "i2"] <- 5   # only the rows below are incomplete
+  threeComplete[3, "i3"] <- 5                                 # i3 must vary within the complete rows
+  for (i in 4:12) threeComplete[i, (i %% 3) + 1] <- NA
+  expect_equal(sum(complete.cases(threeComplete)), 3)
+  optionsThree <- analysisOptions("reliabilityUnidimensionalFrequentist")
+  optionsThree$variables           <- c("i1", "i2", "i3")
+  optionsThree$scaleOmega          <- FALSE
+  optionsThree$scaleMean           <- TRUE
+  optionsThree$itemRestCorrelation <- TRUE
+  resultsThree <- runAnalysis("reliabilityUnidimensionalFrequentist", threeComplete, optionsThree, makeTests = FALSE)
+  expect_identical(resultsThree[["status"]], "complete")
+  scaleRow <- resultsThree[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]][[1]]
+  expect_equal(scaleRow[["estimate"]], mean(rowSums(threeComplete[complete.cases(threeComplete), ])))
+  itemRows <- resultsThree[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+  expect_true(all(vapply(itemRows, function(x) is.numeric(x[["pointEstimate5"]]) &&
+                                                  identical(x[["lower5"]], "") && identical(x[["upper5"]], ""), logical(1))))
 })

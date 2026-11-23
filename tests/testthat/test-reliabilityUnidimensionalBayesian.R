@@ -441,3 +441,48 @@ test_that("Bayesian sum-score statistics use complete rows under pairwise deleti
   estimates <- vapply(scaleData, function(x) x[["estimate"]], numeric(1))
   expect_equal(estimates, c(mean(rowSums(complete)), sd(rowSums(complete))), tolerance = 1e-10)  # 11.30, 2.791
 })
+
+# item-rest correlations are sampled from the complete rows only, so adding incomplete rows must not
+# change them (the sampler reseeds before running); they used to see zero-filled rest scores
+test_that("Bayesian item-rest correlations ignore incomplete rows", {
+  missingAsZeroData <- data.frame(i1 = c(3, 4, 4, 3, 4, 4, 5, 5, 2, 5, 3, 2),
+                                  i2 = c(3, NA, 5, 3, 4, 3, NA, 6, 3, 6, 3, 3),
+                                  i3 = c(4, 4, 4, 3, 5, 4, 5, 5, 3, 4, 3, 4))
+  optionsRest <- analysisOptions("reliabilityUnidimensionalBayesian")
+  optionsRest$variables           <- c("i1", "i2", "i3")
+  optionsRest$scaleOmega          <- FALSE
+  optionsRest$itemRestCorrelation <- TRUE
+  optionsRest$samples             <- 200
+  optionsRest$burnin              <- 50
+  optionsRest$chains              <- 2
+  optionsRest$setSeed             <- TRUE
+  itemRest <- function(dataset) {
+    res <- runAnalysis("reliabilityUnidimensionalBayesian", dataset, optionsRest, makeTests = FALSE)
+    res[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]][["data"]]
+  }
+  withIncomplete <- itemRest(missingAsZeroData)
+  expect_equal(withIncomplete, itemRest(missingAsZeroData[complete.cases(missingAsZeroData), ]))
+  expect_true(all(vapply(withIncomplete, function(x) is.numeric(x[["postMean5"]]), logical(1))))
+})
+
+test_that("Bayesian analysis without complete rows gives empty score statistics instead of an error", {
+  set.seed(4726)
+  factorScore    <- rnorm(40)
+  plannedMissing <- as.data.frame(sapply(1:4, function(j) factorScore + rnorm(40, sd = 0.7)))
+  for (i in 1:40) plannedMissing[i, (i %% 4) + 1] <- NA
+  optionsPm <- analysisOptions("reliabilityUnidimensionalBayesian")
+  optionsPm$variables           <- paste0("V", 1:4)
+  optionsPm$scaleOmega          <- FALSE
+  optionsPm$scaleMean           <- TRUE
+  optionsPm$scaleSd             <- TRUE
+  optionsPm$itemRestCorrelation <- TRUE
+  optionsPm$samples             <- 200
+  optionsPm$burnin              <- 50
+  optionsPm$chains              <- 2
+  resultsPm <- runAnalysis("reliabilityUnidimensionalBayesian", plannedMissing, optionsPm, makeTests = FALSE)
+  expect_identical(resultsPm[["status"]], "complete")
+  scaleRows <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_scaleTable"]][["data"]]
+  expect_true(all(vapply(scaleRows, function(x) identical(x[["estimate"]], ""), logical(1))))
+  itemTable <- resultsPm[["results"]][["stateContainer"]][["collection"]][["stateContainer_itemTable"]]
+  expect_true(any(grepl("only 0 of 40 are complete", vapply(itemTable[["footnotes"]], `[[`, "", "text"))))
+})

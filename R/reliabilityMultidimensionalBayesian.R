@@ -308,9 +308,8 @@ reliabilityMultidimensionalBayesianInternal <- function(jaspResults, dataset, op
   rows[[length(rows) + 1L]] <- addStatRow(gettext("Average interitem correlation"), mean(cc[lower.tri(cc)]))
 
   scoreData <- .multiDimAnalysisData(dataset, options)
-  scores    <- .scaleScores(scoreData, options[["meanSdScoresMethod"]])
-  rows[[length(rows) + 1L]] <- addStatRow(gettext("Mean"), mean(scores))
-  rows[[length(rows) + 1L]] <- addStatRow(gettext("SD"), sd(scores))
+  rows[[length(rows) + 1L]] <- addStatRow(gettext("Mean"), .scoreStatistic(scoreData, options[["meanSdScoresMethod"]], mean))
+  rows[[length(rows) + 1L]] <- addStatRow(gettext("SD"), .scoreStatistic(scoreData, options[["meanSdScoresMethod"]], sd))
 
   if (length(rows) > 0L)
     scaleTable$setData(do.call(rbind.data.frame, c(rows, stringsAsFactors = FALSE)))
@@ -402,6 +401,8 @@ reliabilityMultidimensionalBayesianInternal <- function(jaspResults, dataset, op
   if (showRest) {
     restData <- .multiDimAnalysisData(dataset, options)
     df$itemRestCorrelation <- vapply(seq_along(allItems), function(i) {
+      if (sum(complete.cases(restData)) < .minCompleteRows)
+        return(NA_real_)
       cor(restData[, i], .restScores(restData, i), use = "pairwise.complete.obs")
     }, numeric(1))
   }

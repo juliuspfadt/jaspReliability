@@ -350,9 +350,8 @@ reliabilityMultidimensionalFrequentistInternal <- function(jaspResults, dataset,
   cc <- cor(dataset, use = if (pairwise) "pairwise.complete.obs" else "complete.obs")
   rows[[length(rows) + 1L]] <- addStatRow(gettext("Average interitem correlation"), mean(cc[lower.tri(cc)]))
 
-  scores <- .scaleScores(scoreData, options[["meanSdScoresMethod"]])
-  rows[[length(rows) + 1L]] <- addStatRow(gettext("Mean"), mean(scores))
-  rows[[length(rows) + 1L]] <- addStatRow(gettext("SD"), sd(scores))
+  rows[[length(rows) + 1L]] <- addStatRow(gettext("Mean"), .scoreStatistic(scoreData, options[["meanSdScoresMethod"]], mean))
+  rows[[length(rows) + 1L]] <- addStatRow(gettext("SD"), .scoreStatistic(scoreData, options[["meanSdScoresMethod"]], sd))
   footnotes <- c(footnotes, .incompleteScoresFootnote(scoreData))
 
   scaleTable$setData(do.call(rbind.data.frame, c(rows, stringsAsFactors = FALSE)))
@@ -419,6 +418,8 @@ reliabilityMultidimensionalFrequentistInternal <- function(jaspResults, dataset,
   if (showRest) {
     restData <- .multiDimFreqAnalysisData(dataset, options)
     df[["itemRestCorrelation"]] <- vapply(seq_along(allItems), function(i) {
+      if (sum(complete.cases(restData)) < .minCompleteRows)
+        return(NA_real_)
       cor(restData[, i], .restScores(restData, i), use = "pairwise.complete.obs")
     }, numeric(1))
     footnotes <- c(footnotes, .incompleteScoresFootnote(restData))
