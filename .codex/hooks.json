@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node '/Users/julius/Packages/jaspReliability/.codex/hooks/block-test-edits.js'"
+          }
+        ]
+      }
+    ]
+  }
+}
